@@ -37,6 +37,19 @@ namespace MesnacCoding
         {
             return s.Substring(0, 1).ToLower() + s.Substring(1);
         }
+        
+        //返回驼峰
+        public static string ToHump(string s)
+        {
+            var strings = s.Split('_');
+            string val = "";
+            for (int i = 0; i < strings.Length; i++)
+            {
+                var str = strings[i];
+                val  +=   str.Substring(0, 1).ToUpper() + str.Substring(1);
+            }
+            return val;
+        }
         #endregion
 
         #region 获取实体类的名称
@@ -52,7 +65,7 @@ namespace MesnacCoding
             {
                 s = s.Substring(0, s.Length - 1);
             }
-            return ToPascal(s);
+            return tableName;
         }
         #endregion
 
@@ -510,12 +523,25 @@ namespace MesnacCoding
                 foreach (KeyValuePair<string, string> kvp in fields)
                 {
 //                    sbPrivateField.AppendLine(String.Format("        private {0} _{1} = {2};", kvp.Value, ToCamel(kvp.Key), GetDefaultValue(kvp.Value)));
-                    sbPrivateField.AppendLine(String.Format("        private {0} _{1};", kvp.Value, ToCamel(kvp.Key)));     //去掉默认值
+                    sbPrivateField.AppendLine(String.Format("        private {0} {1};", kvp.Value, kvp.Key));     //去掉默认值
                     sbPublicAttribute.AppendLine();
-                    sbPublicAttribute.AppendLine(String.Format("        public {0} {1}", kvp.Value, ToPascal(kvp.Key)));
+                    sbPublicAttribute.AppendLine(String.Format("        public {0} {1}", kvp.Value, ToHump(kvp.Key)));
                     sbPublicAttribute.AppendLine("        {");
-                    sbPublicAttribute.AppendLine("            set { this._" + ToCamel(kvp.Key) + " = value; }");
-                    sbPublicAttribute.AppendLine("            get { return this._" + ToCamel(kvp.Key) + "; }");
+                    sbPublicAttribute.AppendLine("           get => "+kvp.Key+";");
+                    sbPublicAttribute.AppendLine("           set => "+kvp.Key+" = value;");
+                    sbPublicAttribute.AppendLine("        }");
+                    sbPublicAttribute.AppendLine();
+                    
+                    
+                    
+                    sbPublicAttribute.AppendLine(String.Format("        public void set_{1} ({0} {1})", kvp.Value, kvp.Key));
+                    sbPublicAttribute.AppendLine("        {");
+                    sbPublicAttribute.AppendLine("            this." + ToCamel(kvp.Key) + " = "+ kvp.Key + ";");
+                    sbPublicAttribute.AppendLine("        }");
+                    
+                    sbPublicAttribute.AppendLine(String.Format("        public {0} get_{1}()", kvp.Value, kvp.Key));
+                    sbPublicAttribute.AppendLine("        {");
+                    sbPublicAttribute.AppendLine("           return  this." + ToCamel(kvp.Key)+";") ;
                     sbPublicAttribute.AppendLine("        }");
                     sbPublicAttribute.AppendLine();
                 }
