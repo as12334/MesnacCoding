@@ -1,0 +1,47 @@
+/************************************************************************************
+ *      ${CopyRight}
+ *      File:
+ *				RowMapper.cs
+ *      Description:
+ *				 数据行映射器类
+ *      Author:
+ *				${Author}
+ *				${AuthorEmail}
+ *				${Online}
+ *      Finish DateTime:
+ *				${Date}
+ *      History:
+ ***********************************************************************************/
+using System;
+using System.Collections.Generic;
+using System.Text;
+using Spring.Data.Generic;
+using System.Reflection;
+using System.IO;
+namespace ${DAONameSpace}
+{
+    using ${ComponentNameSpace};
+    /// <summary>
+    /// 数据行映射器类，主要作用是把DataReader中对应的字段值封装到实体类的属性中去
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    public class RowMapper<T> : IRowMapper<T> 
+    {
+        public T MapRow(System.Data.IDataReader reader, int rowNum)
+        {
+            Type entityType = typeof(T);
+            T entity = (T)entityType.Assembly.CreateInstance(entityType.FullName);
+            PropertyInfo[] properties = entityType.GetProperties();
+            Dictionary<string, XmlClassMap> dic = EntityMapperHandler.GetInstance().GetMapDictionary();
+            XmlClassMap classMap = dic[entityType.Name];
+            foreach (PropertyInfo property in properties)
+            {
+                if (property.CanWrite && classMap.Properties.ContainsKey(property.Name))
+                {
+                    property.SetValue(entity, reader[classMap.Properties[property.Name].ColumnName], null);
+                }
+            }
+            return entity;
+        }
+    }
+}

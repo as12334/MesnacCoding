@@ -1,0 +1,91 @@
+/************************************************************************************
+ *      ${CopyRight}
+ *      File:
+ *				SpringObjectFactory.cs
+ *      Description:
+ *				 Spring对象工厂类
+ *      Author:
+ *				${Author}
+ *				${AuthorEmail}
+ *				${Online}
+ *      Finish DateTime:
+ *				${Date}
+ *      History:     
+ *      
+ ***********************************************************************************/
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Text;
+using Spring.Context;
+using Spring.Context.Support;
+namespace ${TopComponentsNameSpace}
+{
+    /// <summary>
+    /// Spring对象工厂类，用于从Spring容器中获取对象，使用单例设计模式实现
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    public class SpringObjectFactory<T>
+    {
+        private static SpringObjectFactory<T> instance = null;    //私有静态变量用于保存本类唯一的实例
+        private static IApplicationContext ctx = null;
+        /// <summary>
+        /// 构造方法设计为私有，以确保本类实例唯一性
+        /// </summary>
+        private SpringObjectFactory()
+        {
+            try
+            {
+                lock (this)
+                {
+                    if (ctx == null)
+                    {
+                        ctx = ContextRegistry.GetContext();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        /// <summary>
+        /// 用户获取本类实例的公有静态方法
+        /// </summary>
+        /// <returns>返回本类实例</returns>
+        public static SpringObjectFactory<T> GetInstance()
+        {
+            if (instance == null)
+            {
+                instance = new SpringObjectFactory<T>();
+            }
+            return instance;
+        }
+        /// <summary>
+        /// 对象方法，根据对象ID从Spring容器中获取对象
+        /// </summary>
+        /// <param name="objectId">对象名对应Spring配置文件中的object id</param>
+        /// <returns>返回对应的对象</returns>
+        public T GetObjectById(string objectId)
+        {
+
+            return (T)ctx.GetObject(objectId);
+        }
+        /// <summary>
+        /// 根据泛型T从Spring容易起获取匹配的第一个对象
+        /// </summary>
+        /// <returns>返回对应的对象</returns>
+        public T GetObject()
+        {
+            IEnumerator en = ctx.GetObjectsOfType(typeof(T)).Values.GetEnumerator();
+            if (en.MoveNext())
+            {
+                return (T)en.Current;
+            }
+            else
+            {
+                return default(T);
+            }
+        }
+    }
+}

@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MesnacCoding", "MesnacCoding\MesnacCoding.csproj", "{42BB9EE8-2909-43AB-BCD6-3C31BFC49A98}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestApp", "TestApp\TestApp.csproj", "{438999D9-54C7-4473-B2CC-0BF9A4218C48}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{42BB9EE8-2909-43AB-BCD6-3C31BFC49A98}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{42BB9EE8-2909-43AB-BCD6-3C31BFC49A98}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{42BB9EE8-2909-43AB-BCD6-3C31BFC49A98}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{42BB9EE8-2909-43AB-BCD6-3C31BFC49A98}.Release|Any CPU.Build.0 = Release|Any CPU
+		{438999D9-54C7-4473-B2CC-0BF9A4218C48}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{438999D9-54C7-4473-B2CC-0BF9A4218C48}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{438999D9-54C7-4473-B2CC-0BF9A4218C48}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{438999D9-54C7-4473-B2CC-0BF9A4218C48}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

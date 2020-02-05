@@ -1,0 +1,7 @@
+F:\技术准备案例\MyBatis.NET\基于MyBatis.NET代码生成器源代码\MesnacCoding\TestApp\bin\Release\TestApp.exe
+F:\技术准备案例\MyBatis.NET\基于MyBatis.NET代码生成器源代码\MesnacCoding\TestApp\bin\Release\TestApp.pdb
+F:\技术准备案例\MyBatis.NET\基于MyBatis.NET代码生成器源代码\MesnacCoding\TestApp\bin\Release\MesnacCoding.exe
+F:\技术准备案例\MyBatis.NET\基于MyBatis.NET代码生成器源代码\MesnacCoding\TestApp\bin\Release\MesnacCoding.pdb
+F:\技术准备案例\MyBatis.NET\基于MyBatis.NET代码生成器源代码\MesnacCoding\TestApp\obj\Release\TestApp.csprojResolveAssemblyReference.cache
+F:\技术准备案例\MyBatis.NET\基于MyBatis.NET代码生成器源代码\MesnacCoding\TestApp\obj\Release\TestApp.exe
+F:\技术准备案例\MyBatis.NET\基于MyBatis.NET代码生成器源代码\MesnacCoding\TestApp\obj\Release\TestApp.pdb

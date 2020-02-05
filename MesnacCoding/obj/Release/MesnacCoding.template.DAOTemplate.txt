@@ -1,0 +1,19 @@
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace ${DAONameSpace}.Implements
+{
+    using ${EntityNameSpace};
+    using ${DAONameSpace}.Interface;
+    public class ${EntityClassName}${DAOClassPostFix} : Base${DAOClassPostFix}<${EntityClassName}>, I${EntityClassName}${DAOClassPostFix}
+    {
+        #region 构造方法
+
+        public ${EntityClassName}${DAOClassPostFix}() : base() { }
+
+        public ${EntityClassName}${DAOClassPostFix}(string language) : base(language) { }
+
+        #endregion
+    }
+}

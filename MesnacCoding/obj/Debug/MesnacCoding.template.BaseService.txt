@@ -1,0 +1,657 @@
+/************************************************************************************
+ *      ${CopyRight}
+ *      File:
+ *				Base${DAOClassPostFix}.cs
+ *      Description:
+ *				 基于泛型数据访问抽象基类
+ *      Author:
+ *				${Author}
+ *				${AuthorEmail}
+ *				${Online}
+ *      Finish DateTime:
+ *				${Date}
+ *      History:
+ *      
+ ***********************************************************************************/
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Text;
+using System.Reflection;
+using System.Data;
+using System.Data.SqlClient;
+namespace ${DAONameSpace}
+{
+    using ${ComponentNameSpace};
+    using MyBatis.DataMapper.MappedStatements;
+    using MyBatis.DataMapper.Scope;
+    using MyBatis.DataMapper.Session;
+    using MyBatis.DataMapper;
+    /// <summary>
+    /// 基于泛型数据访问抽象基类，封装了基本数据访问操作CRUD
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    public abstract class Base${DAOClassPostFix}<T> : IBase${DAOClassPostFix}<T> where T : new()
+    {
+        #region 私有字段
+
+        private readonly string procedureName = "MesnacPaging";   //分页存储过程名 -for sql2000/2005/2008
+        private readonly string pagerProductName = "PagerShow";      //基于SQL语句分页的存储过程名--for sql2005/2008
+        protected string tableName = String.Empty;         //对应泛型的表名
+        protected string stmtPrefix = String.Empty;         //MyBatis语句标识前缀
+        
+        #endregion
+
+        #region 构造方法
+
+        public Base${DAOClassPostFix}()
+        {
+            this.stmtPrefix = typeof(T).Name;
+            this.tableName = this.stmtPrefix;
+        }
+        
+        public Base${DAOClassPostFix}(string language)
+        {
+            this.stmtPrefix = language + typeof(T).Name;
+            this.tableName = this.stmtPrefix;
+        }
+
+        #endregion
+
+        #region IBase${DAOClassPostFix}<T> 成员
+        /// <summary>
+        /// Type类型向DBType类型转换
+        /// </summary>
+        /// <param name="t">Type类型</param>
+        /// <returns>返回DBType</returns>
+        public DbType TypeToDbType(Type t)
+        {
+            DbType dbt;
+            try
+            {
+                dbt = (DbType)Enum.Parse(typeof(DbType), t.Name);
+            }
+            catch
+            {
+                dbt = DbType.Object;
+            }
+            return dbt;
+        }
+
+        /// <summary>
+        /// 按照主键查找
+        /// </summary>
+        /// <param name="ids">主键参数列表</param>
+        /// <returns></returns>
+        public T GetById(int objId)
+        {
+            string stmtId = "GetById";
+            stmtId = String.Format("{0}.{1}", this.stmtPrefix, stmtId);
+            Dictionary<string, object> parameters = new Dictionary<string, object>();
+            parameters.Add("ObjId", objId);
+            T entity = DbHelper.Instance.DataMapper.QueryForObject<T>(stmtId, parameters);
+            return entity;
+        }
+
+        public T GetById(Dictionary<string, object> ids)
+        {
+            string stmtId = "GetById";
+            stmtId = String.Format("{0}.{1}", this.stmtPrefix, stmtId);
+            T entity = DbHelper.Instance.DataMapper.QueryForObject<T>(stmtId, ids);
+            return entity;
+        }
+        /// <summary>
+        /// 指定条件的查询
+        /// </summary>
+        /// <param name="where">查询条件</param>
+        /// <returns>返回实体类的集合</returns>
+        public IList<T> GetListByWhere(Dictionary<string, object> where)
+        {
+            string stmtId = "GetListByWhere";
+            stmtId = String.Format("{0}.{1}", this.stmtPrefix, stmtId);
+            IList<T> resultList = DbHelper.Instance.DataMapper.QueryForList<T>(stmtId, where);
+            return resultList;
+        }
+        /// <summary>
+        /// 指定条件和排序的查询
+        /// </summary>
+        /// <param name="where">查询条件</param>
+        /// <param name="order">排序字段</param>
+        /// <returns>返回实体类的集合</returns>
+        public IList<T> GetListByWhereAndOrder(Dictionary<string, object> where, string order)
+        {
+            string stmtId = "GetListByWhereAndOrder";
+            stmtId = String.Format("{0}.{1}", this.stmtPrefix, stmtId);
+            where.Add("OrderBy", order);
+            IList<T> resultList = DbHelper.Instance.DataMapper.QueryForList<T>(stmtId, where);
+            return resultList;
+        }
+        /// <summary>
+        /// 指定条件的查询
+        /// </summary>
+        /// <param name="where">查询条件</param>
+        /// <returns>返回数据集</returns>
+        public DataSet GetDataSetByWhere(Dictionary<string, object> where)
+        {
+            string stmtId = "GetDataSetByWhere";
+            stmtId = String.Format("{0}.{1}", this.stmtPrefix, stmtId);
+            DataTable tableResult = DbHelper.Instance.DataMapper.QueryForDataTable(stmtId, where);
+            DataSet dsResult = new DataSet();
+            dsResult.Tables.Add(tableResult);
+            return dsResult;
+        }
+        /// <summary>
+        /// 指定返回字段和阐述的查询
+        /// </summary>
+        /// <param name="returnFields">查询结果中应包含的字段,*代表所有字段</param>
+        /// <param name="parameters"></param>
+        /// <returns></returns>
+        public DataSet GetDataSetByFieldsAndParams(string returnFields, params KeyValuePair<string, object>[] parameters)
+        {
+            returnFields = String.IsNullOrEmpty(returnFields) ? "*" : returnFields;
+            Dictionary<string, object> newParameters = new Dictionary<string, object>();
+            foreach (KeyValuePair<string, object> kv in parameters)
+            {
+                newParameters.Add(kv.Key, kv.Value);
+            }
+            return this.GetDataSetByFieldsAndParams(returnFields, newParameters);
+        }
+        /// <summary>
+        /// 指定返回字段和参数的查询
+        /// </summary>
+        /// <param name="parameters">查询结果中应包含的字段,*代表所有字段</param>
+        /// <param name="values">查询参数列表</param>
+        /// <returns>返回数据集</returns>
+        public DataSet GetDataSetByFieldsAndParams(string returnFields, Dictionary<string, object> parameters)
+        {
+            string stmtId = "GetDataSetByFieldsAndParams";
+            stmtId = String.Format("{0}.{1}", this.stmtPrefix, stmtId);
+            returnFields = String.IsNullOrEmpty(returnFields) ? "*" : returnFields;
+            parameters.Add("ColumnNames", returnFields);
+            DataTable tableResult = DbHelper.Instance.DataMapper.QueryForDataTable(stmtId, parameters);
+            DataSet dsResult = new DataSet();
+            dsResult.Tables.Add(tableResult);
+            return dsResult;
+        }
+        /// <summary>
+        /// 查询所有记录并以List形式返回
+        /// </summary>
+        /// <returns></returns>
+        public IList<T> GetAllList()
+        {
+            string stmtId = "GetAllListOrder";      //与GetAllListOrder共用同一语句
+            stmtId = String.Format("{0}.{1}", this.stmtPrefix, stmtId);
+            IList<T> resultList = DbHelper.Instance.DataMapper.QueryForList<T>(stmtId, null);
+            return resultList;
+        }
+        /// <summary>
+        /// 查找表中的记录并排序
+        /// </summary>
+        /// <param name="order">排序字段</param>
+        /// <returns>返回对应表的实体类的集合</returns>
+        public IList<T> GetAllListOrder(string order)
+        {
+            string stmtId = "GetAllListOrder";
+            stmtId = String.Format("{0}.{1}", this.stmtPrefix, stmtId);
+            Dictionary<string, object> parameters = new Dictionary<string, object>();
+            if (!String.IsNullOrEmpty(order))
+            {
+                parameters.Add("OrderBy", order);
+            }
+            IList<T> resultList = DbHelper.Instance.DataMapper.QueryForList<T>(stmtId, parameters);
+            return resultList;
+        }
+        /// <summary>
+        /// 返回指定排序的前N条记录
+        /// </summary>
+        /// <param name="n">返回结果中的记录数</param>
+        /// <param name="order">排序字段</param>
+        /// <returns>返回实体类的集合</returns>
+        public IList<T> GetTopNListOrder(int n, string order)
+        {
+            string stmtId = "GetTopNListWhereOrder";        //与GetTopNListWhereOrder共用同一语句
+            stmtId = String.Format("{0}.{1}", this.stmtPrefix, stmtId);
+            Dictionary<string, object> parameters = new Dictionary<string, object>();
+            parameters.Add("Top", n);
+            if (!String.IsNullOrEmpty(order))
+            {
+                parameters.Add("OrderBy", order);
+            }
+            IList<T> resultList = DbHelper.Instance.DataMapper.QueryForList<T>(stmtId, parameters);
+            return resultList;
+        }
+        /// <summary>
+        /// 返回指定条件和排序的前N条记录
+        /// </summary>
+        /// <param name="n">返回结果中的最大记录数</param>
+        /// <param name="where">筛选条件</param>
+        /// <param name="order">排序字段</param>
+        /// <returns>返回实体类的集合</returns>
+        public IList<T> GetTopNListWhereOrder(int n, Dictionary<string, object> where, string order)
+        {
+            string stmtId = "GetTopNListWhereOrder";
+            stmtId = String.Format("{0}.{1}", this.stmtPrefix, stmtId);
+            where.Add("Top", n);
+            if (!String.IsNullOrEmpty(order))
+            {
+                where.Add("OrderBy", order);
+            }
+            IList<T> resultList = DbHelper.Instance.DataMapper.QueryForList<T>(stmtId, where);
+            return resultList;
+        }
+        /// <summary>
+        /// 查询所有记录并以DataSet方式返回数据
+        /// </summary>
+        /// <returns></returns>
+        public DataSet GetAllDataSet()
+        {
+            return this.GetDataSetByWhere(null);
+        }
+        /// <summary>
+        /// 获取某个属性（数据列）的最大值
+        /// </summary>
+        /// <param name="propertyItem">属性（数据列）</param>
+        /// <returns>返回此属性（数据列）对应的最大值</returns>
+        public object GetMaxValueByProperty(string propertyItem)
+        {
+            string stmtId = "GetMaxValueByProperty";
+            stmtId = String.Format("{0}.{1}", this.stmtPrefix, stmtId);
+            Dictionary<string, object> parameters = new Dictionary<string, object>();
+            parameters.Add("ColumnName", propertyItem);
+            object result = DbHelper.Instance.DataMapper.QueryForObject(stmtId, parameters);
+            return (result as System.Collections.Hashtable)[""];
+        }
+        /// <summary>
+        /// 调用存储过程的分页查询方法
+        /// </summary>
+        /// <param name="pageResult">用于传递查询条件的分页类的对象</param>
+        /// <returns>返回封装了页面数据和总记录数据的分页类对象</returns>
+        public PageResult<T> GetPageData(PageResult<T> pageResult)
+        {
+            pageResult.Data.Clear();
+            string stmtId = "GetPageDataMesnacPagging";
+            stmtId = String.Format("{0}.{1}", this.stmtPrefix, stmtId);
+            System.Collections.Hashtable parameters = new System.Collections.Hashtable();
+            if (this.tableName.StartsWith("["))
+            {
+                parameters.Add("TableName", this.tableName);
+            }
+            else
+            {
+                parameters.Add("TableName", String.Format("[{0}]", this.tableName));
+            }
+            parameters.Add("ReturnFields", pageResult.ReturnFields);
+            parameters.Add("PageSize", pageResult.PageSize);
+            parameters.Add("PageIndex", pageResult.PageIndex);
+            parameters.Add("Where", pageResult.Where);
+            parameters.Add("Orderfld", pageResult.Orderfld);
+            parameters.Add("OrderType", pageResult.OrderType);
+
+            IList resultList = DbHelper.Instance.DataMapper.QueryForList(stmtId, parameters);
+            pageResult.Data = resultList[0] as List<T>;
+            pageResult.RecordCount = Convert.ToInt32((resultList[1] as List<Hashtable>)[0]["RecordCount"]);
+            return pageResult;
+        }
+        /// <summary>
+        /// 调用基于SQL的存储过程的分页查询方法
+        /// </summary>
+        /// <param name="pageResult">用于传递查询条件的分页类的对象</param>
+        /// <returns>返回封装了页面数据和总记录数据的分页类对象,dataSet,recordCount</returns>
+        public PageResult<T> GetPageDataBySql(PageResult<T> pageResult)
+        {
+            pageResult.Data.Clear();
+            string stmtId = "GetPageDataPagerShow";
+            stmtId = String.Format("{0}.{1}", this.stmtPrefix, stmtId);
+            System.Collections.Hashtable parameters = new System.Collections.Hashtable();
+
+            parameters.Add("QueryStr", pageResult.QueryStr);
+            parameters.Add("PageSize", pageResult.PageSize);
+            parameters.Add("PageCurrent", pageResult.PageIndex);
+            parameters.Add("FdShow", pageResult.ReturnFields);
+            parameters.Add("FdOrder", pageResult.Orderfld);
+            parameters.Add("Rows", 0);
+
+            IList<T> resultList = DbHelper.Instance.DataMapper.QueryForList<T>(stmtId, parameters);
+            pageResult.Data = resultList as List<T>;
+            pageResult.RecordCount = Convert.ToInt32(parameters["Rows"]);
+
+            return pageResult;
+        }
+        /// <summary>
+        /// 调用存储过程的分页查询方法
+        /// </summary>
+        /// <param name="stmtId">SQL语句对象Id</param>
+        /// <param name="pageResult">用于传递查询条件的分页类的对象</param>
+        /// <returns>返回封装了页面数据和总记录数据的分页类对象</returns>
+        public PageResult<T> GetPageDataByReader(string stmtId, PageResult<T> pageResult)
+        {
+            if (stmtId.IndexOf(".") == -1)
+            {
+                stmtId = String.Format("{0}.{1}", this.stmtPrefix, stmtId);
+            }
+            System.Collections.Hashtable parameters = new System.Collections.Hashtable();
+            parameters.Add("ReturnFields", pageResult.ReturnFields);
+            parameters.Add("PageSize", pageResult.PageSize);
+            parameters.Add("PageIndex", pageResult.PageIndex);
+            parameters.Add("Where", pageResult.Where);
+            parameters.Add("Orderfld", pageResult.Orderfld);
+            parameters.Add("OrderType", pageResult.OrderType);
+
+            using (IDataReader reader = DbHelper.Instance.DataMapper.QueryForDataReader(stmtId, parameters))
+            {
+                int begin = pageResult.PageSize * (pageResult.PageIndex - 1) + 1;
+                int count = 0;
+                int pageSize = 0;
+                DataTable table = new DataTable();
+                for (int i = 0; i < reader.FieldCount; i++)
+                {
+                    DataColumn col = new DataColumn(reader.GetName(i), reader.GetFieldType(i));
+                    table.Columns.Add(col);
+                }
+                while (reader.Read())
+                {
+                    count++;
+                    if (count >= begin && pageSize < pageResult.PageSize)
+                    {
+                        DataRow row = table.NewRow();
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            row[i] = reader[i];
+                        }
+                        table.Rows.Add(row);
+                        pageSize++;
+                    }
+                }
+                reader.Close();
+                DataSet ds = new DataSet();
+                ds.Tables.Add(table);
+                pageResult.DataSet = ds;
+                pageResult.RecordCount = count;
+            }
+            return pageResult;
+        }
+        /// <summary>
+        /// 调用存储过程的分页查询方法
+        /// </summary>
+        /// <param name="pageResult">用于传递查询条件的分页类的对象</param>
+        /// <returns>返回封装了页面数据和总记录数据的分页类对象</returns>
+        public PageResult<T> GetPageDataByReader(PageResult<T> pageResult)
+        {
+            string stmtId = "GetPageDataByReader";
+            stmtId = String.Format("{0}.{1}", this.stmtPrefix, stmtId);
+            return this.GetPageDataByReader(stmtId, pageResult);
+        }
+        /// <summary>
+        /// 分页查询方法，基于分页存储过程
+        /// </summary>
+        /// <param name="pageResult">用于传递查询条件的分页类的对象</param>
+        /// <returns>返回封装了页面数据和总页数、总记录数的结果集的数据集</returns>
+        public DataSet GetPageDataSet(PageResult<T> pageResult)
+        {
+            pageResult.Data.Clear();
+            string stmtId = "GetPageDataSet";
+            stmtId = String.Format("{0}.{1}", this.stmtPrefix, stmtId);
+            System.Collections.Hashtable parameters = new System.Collections.Hashtable();
+            if (this.tableName.StartsWith("["))
+            {
+                parameters.Add("TableName", this.tableName);
+            }
+            else
+            {
+                parameters.Add("TableName", String.Format("[{0}]", this.tableName));
+            }
+            parameters.Add("ReturnFields", pageResult.ReturnFields);
+            parameters.Add("PageSize", pageResult.PageSize);
+            parameters.Add("PageIndex", pageResult.PageIndex);
+            parameters.Add("Where", pageResult.Where);
+            parameters.Add("Orderfld", pageResult.Orderfld);
+            parameters.Add("OrderType", pageResult.OrderType);
+
+            DataSet ds = DbHelper.Instance.DataMapper.QueryForDataSet(stmtId, parameters);
+            return ds;
+        }
+        /// <summary>
+        /// 执行存储过程的方法
+        /// </summary>
+        /// <param name="stmtId">存储过程的语句对象Id</param>
+        /// <param name="values">存储过程的参数值</param>
+        /// <returns>返回存储过程执行后对应的数据集</returns>
+        public DataSet GetDataSetByStoreProcedure(string stmtId, params KeyValuePair<string, object>[] values)
+        {
+            stmtId = String.Format("{0}.{1}", this.stmtPrefix, stmtId);
+            Hashtable parameters = new Hashtable();
+            foreach (KeyValuePair<string, object> kv in values)
+            {
+                parameters.Add(kv.Key, kv.Value);
+            }
+            DataSet ds = DbHelper.Instance.DataMapper.QueryForDataSet(stmtId, parameters);
+            return ds;
+        }
+        /// <summary>
+        /// 执行存储过程的方法
+        /// </summary>
+        /// <param name="stmtId">存储过程的语句对象Id</param>
+        /// <param name="values">存储过程的参数</param>
+        /// <returns>返回存储过程执行后对应的数据集</returns>
+        public DataSet GetDataSetByStoreProcedure(string stmtId, Dictionary<string, object> values)
+        {
+            stmtId = String.Format("{0}.{1}", this.stmtPrefix, stmtId);
+            DataSet ds = DbHelper.Instance.DataMapper.QueryForDataSet(stmtId, values);
+            return ds;
+        }
+        /// <summary>
+        /// 获取符合条件的记录数
+        /// </summary>
+        /// <param name="stmtId">SQL语句对象ID</param>
+        /// <param name="values">参数</param>
+        /// <returns>返回符合条件的记录数</returns>
+        public int GetRowCount(string stmtId , params KeyValuePair<string,object>[] values)
+        {
+            if (stmtId.IndexOf(".") == -1)
+            {
+                stmtId = String.Format("{0}.{1}", this.stmtPrefix, stmtId);
+            }
+            Hashtable parameters = new Hashtable();
+            foreach (KeyValuePair<string, object> kv in values)
+            {
+                parameters.Add(kv.Key, kv.Value);
+            }
+            int result = DbHelper.Instance.DataMapper.QueryForObject<int>(stmtId, parameters);
+            return result;
+        }
+        /// <summary>
+        /// 获取符合条件的记录数
+        /// </summary>
+        /// <param name="values">参数</param>
+        /// <returns>返回符合条件的记录数</returns>
+        public int GetRowCount(params KeyValuePair<string, object>[] values)
+        {
+            string stmtId = "GetRowCount";
+            stmtId = String.Format("{0}.{1}", this.stmtPrefix, stmtId);
+            return this.GetRowCount(stmtId, values);
+        }
+        /// <summary>
+        /// 添加新记录
+        /// </summary>
+        /// <param name="entity">对应新记录的实体数据</param>
+        /// <returns>返回追加记录的主键值</returns>
+        public int Insert(T entity)
+        {
+            string stmtId = "Insert";
+            stmtId = String.Format("{0}.{1}", this.stmtPrefix, stmtId);
+            object result = DbHelper.Instance.DataMapper.Insert(stmtId, entity);
+            return Convert.ToInt32(result);
+        }
+        /// <summary>
+        /// 批量添加新纪录
+        /// </summary>
+        /// <param name="lst">对应的List记录</param>
+        /// <returns>返回受影响的记录行数</returns>
+        public int BatchInsert(List<T> lst)
+        {
+            string stmtId = "Insert";
+            stmtId = String.Format("{0}.{1}", this.stmtPrefix, stmtId);
+            foreach (T entity in lst)
+            {
+                object result = DbHelper.Instance.DataMapper.Insert(stmtId, entity);
+            }
+            return Convert.ToInt32(lst.Count);
+        }
+        /// <summary>
+        /// 更新记录
+        /// </summary>
+        /// <param name="entity">需要更新记录对应的实体数据</param>
+        /// <returns>返回更新的记录数</returns>
+        public int Update(T entity)
+        {
+            string stmtId = "Update";
+            stmtId = String.Format("{0}.{1}", this.stmtPrefix, stmtId);
+            object result = DbHelper.Instance.DataMapper.Update(stmtId, entity);
+            return Convert.ToInt32(result);
+        }
+        /// <summary>
+        /// 按条件更新
+        /// </summary>
+        /// <param name="stmtId">更新语句对象Id</param>
+        /// <param name="values">参数</param>
+        /// <returns>返回更新的记录数</returns>
+        public int UpdateByStmt(string stmtId, params KeyValuePair<string, object>[] values)
+        {
+            if (stmtId.IndexOf(".") == -1)
+            {
+                stmtId = String.Format("{0}.{1}", this.stmtPrefix, stmtId);
+            }
+            Hashtable parameters = new Hashtable();
+            foreach (KeyValuePair<string, object> kv in values)
+            {
+                parameters.Add(kv.Key, kv.Value);
+            }
+            int result = DbHelper.Instance.DataMapper.Update(stmtId, parameters);
+            return result;
+        }
+        /// <summary>
+        /// 按条件更新
+        /// </summary>
+        /// <param name="stmtId">更新语句对象Id</param>
+        /// <param name="values">参数</param>
+        /// <returns>返回更新的记录数</returns>
+        public int UpdateByStmt(string stmtId, Dictionary<string, object> values)
+        {
+            if (stmtId.IndexOf(".") == -1)
+            {
+                stmtId = String.Format("{0}.{1}", this.stmtPrefix, stmtId);
+            }
+            int result = DbHelper.Instance.DataMapper.Update(stmtId, values);
+            return result;
+        }
+        /// <summary>
+        /// 删除主键是id值得记录
+        /// </summary>
+        /// <param name="id">要删除记录的主键值</param>
+        /// <returns>返回删除的记录条数</returns>
+        public int Delete(object id)
+        {
+            string stmtId = "Delete";
+            stmtId = String.Format("{0}.{1}", this.stmtPrefix, stmtId);
+            int result = DbHelper.Instance.DataMapper.Delete(stmtId, id);
+            return result;
+        }
+        /// <summary>
+        /// 删除对象对应的记录
+        /// </summary>
+        /// <param name="entity">与要删除记录对应的对象</param>
+        public int Delete(T entity)
+        {
+            string stmtId = "DeleteByEntity";
+            stmtId = String.Format("{0}.{1}", this.stmtPrefix, stmtId);
+            int result = DbHelper.Instance.DataMapper.Delete(stmtId, entity);
+            return result;
+        }
+        /// <summary>
+        /// 按指定的条件删除数据
+        /// </summary>
+        /// <param name="stmtId">删除语句对象Id</param>
+        /// <param name="values">参数</param>
+        /// <returns>返回删除的记录数</returns>
+        public int DeleteByStmt(string stmtId, params KeyValuePair<string, object>[] values)
+        {
+            if (stmtId.IndexOf(".") == -1)
+            {
+                stmtId = String.Format("{0}.{1}", this.stmtPrefix, stmtId);
+            }
+            Hashtable parameters = new Hashtable();
+            foreach (KeyValuePair<string, object> kv in values)
+            {
+                parameters.Add(kv.Key, kv.Value);
+            }
+            int result  = DbHelper.Instance.DataMapper.Delete(stmtId, parameters);
+            return result;
+        }
+        /// <summary>
+        /// 按指定的条件删除数据
+        /// </summary>
+        /// <param name="stmtId">删除语句对象Id</param>
+        /// <param name="values">参数</param>
+        /// <returns>返回删除的记录数</returns>
+        public int DeleteByStmt(string stmtId, Dictionary<string, object> values)
+        {
+            if (stmtId.IndexOf(".") == -1)
+            {
+                stmtId = String.Format("{0}.{1}", this.stmtPrefix, stmtId);
+            }
+            int result = DbHelper.Instance.DataMapper.Delete(stmtId, values);
+            return result;
+        }
+        /// <summary>
+        /// 清除表中所有记录
+        /// </summary>
+        public void ClearData()
+        {
+            string stmtId = "ClearData";
+            stmtId = String.Format("{0}.{1}", this.stmtPrefix, stmtId);
+            DbHelper.Instance.DataMapper.QueryForObject(stmtId, null);
+        }
+
+        #endregion
+        
+        #region 辅助方法
+
+        /// <summary>
+        /// 得到运行时ibatis.net动态生成的SQL
+        /// </summary>
+        /// <param name="sqlMapper"></param>
+        /// <param name="statementName"></param>
+        /// <param name="paramObject"></param>
+        /// <returns></returns>
+        protected virtual string GetRuntimeSql(string statementName, object paramObject)
+        {
+            string result = string.Empty;
+            try
+            {
+                IMappedStatement statement = DbHelper.Instance.Engine.ModelStore.GetMappedStatement(statementName);
+                if (null == DbHelper.Instance.Engine.ModelStore.SessionStore.CurrentSession)
+                {
+                    DbHelper.Instance.Engine.ModelStore.SessionFactory.OpenSession();
+                }
+                Console.WriteLine(DbHelper.Instance.Engine.ModelStore.SessionStore.CurrentSession.Connection.State);
+                RequestScope scope = statement.Statement.Sql.GetRequestScope(statement, paramObject, DbHelper.Instance.Engine.ModelStore.SessionStore.CurrentSession);
+                result = scope.PreparedStatement.PreparedSql;
+
+                Console.WriteLine(result);
+
+                foreach (IDbDataParameter para in scope.PreparedStatement.DbParameters)
+                {
+                    Console.WriteLine("{0} = {1}", para.ParameterName, para.Value);
+                }
+            }
+            catch (Exception ex)
+            {
+                result = "获取SQL语句出现异常:" + ex.Message;
+                Console.Write(result);
+            }
+            return result;
+        }
+
+        #endregion
+    }
+}

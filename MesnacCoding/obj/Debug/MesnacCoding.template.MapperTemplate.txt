@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<sqlMap namespace="${EntityClassName}"
+	xmlns="http://ibatis.apache.org/mapping"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+    <alias>
+        <typeAlias alias="${EntityClassName}" type="${EntityNameSpace}.${EntityClassName}, ${EntityNameSpace}" />
+    </alias>
+    <parameterMaps>
+        <parameterMap id="MesnacPaggingParameters" class="map">
+            <parameter property="TableName" column="TableName" />
+            <parameter property="ReturnFields" column="ReturnFields" />
+            <parameter property="PageSize" column="PageSize" />
+            <parameter property="PageIndex" column="PageIndex" />
+            <parameter property="Where" column="Where" />
+            <parameter property="Orderfld" column="Orderfld" />
+            <parameter property="OrderType" column="OrderType" />
+        </parameterMap>
+        <parameterMap id="PagerShowParameters" class="map">
+            <parameter property="QueryStr" column="QueryStr" />
+            <parameter property="PageSize" column="PageSize" />
+            <parameter property="PageCurrent" column="PageCurrent" />
+            <parameter property="FdShow" column="FdShow" />
+            <parameter property="FdOrder" column="FdOrder" />
+            <parameter property="Rows" column="Rows" direction="Output"/>
+        </parameterMap>
+    </parameterMaps>
+    <resultMaps>
+        <!--分页结果映射，返回实体List数据 begin-->
+        <resultMap id="EntityResult" class="${EntityClassName}">
+            ${PropertyMap}
+        </resultMap>
+        <resultMap id="PageEntityResult" class="map">
+            <result property="PageCount" column="PageCount" />
+            <result property="RecordCount" column="RecordCount" />
+        </resultMap>
+        <!--分页结果映射，返回实体List数据 end-->
+        <!--分页结果映射，返回DataSet数据 begin-->
+        <resultMap id="TableResult" class="Row">
+            ${PropertyMap}
+        </resultMap>
+        <resultMap id="PageTableResult" class="Row">
+            <result property="PageCount" column="PageCount" />
+            <result property="RecordCount" column="RecordCount" />
+        </resultMap>
+        <!--分页结果映射，返回DataSet数据 end-->
+    </resultMaps>
+    <statements>
+        <procedure id="${EntityClassName}.GetPageDataMesnacPagging" parameterMap="MesnacPaggingParameters" resultMap="EntityResult,PageEntityResult">
+            MesnacPaging
+        </procedure>
+        <procedure id="${EntityClassName}.GetPageDataPagerShow" parameterMap="PagerShowParameters" resultMap="EntityResult">
+            PagerShow
+        </procedure>
+        <procedure id="${EntityClassName}.GetPageDataSet" parameterMap="MesnacPaggingParameters" resultMap="TableResult,PageTableResult">
+            MesnacPaging
+        </procedure>
+        <select id="${EntityClassName}.GetPageDataByReader" parameterMap="MesnacPaggingParameters">
+            SELECT 
+            ${FieldList} 
+            FROM [dbo].[${EntityClassName}]
+        </select>
+        <select id="${EntityClassName}.GetRowCount" parameterClass="map" resultClass="int">
+            SELECT COUNT(*) FROM [dbo].[${EntityClassName}]
+        </select>
+        <select id="${EntityClassName}.GetById" parameterClass="map" resultClass="${EntityClassName}">
+            SELECT 
+            ${FieldList} 
+            FROM [dbo].[${EntityClassName}] WHERE (${KeyValueList})
+        </select>
+
+        <select id="${EntityClassName}.GetListByWhere"  parameterClass="map" resultClass="${EntityClassName}">
+            SELECT 
+            ${FieldList} 
+            FROM [dbo].[${EntityClassName}]
+            ${DynamicWhere}
+        </select>
+
+        <select id="${EntityClassName}.GetListByWhereAndOrder"  parameterClass="map" resultClass="${EntityClassName}">
+            SELECT 
+            ${FieldList} 
+            FROM [dbo].[${EntityClassName}]
+            ${DynamicWhere}
+            <isPropertyAvailable property="OrderBy" prepend="">
+                order by $OrderBy$
+            </isPropertyAvailable>
+        </select>
+
+        <select id="${EntityClassName}.GetDataSetByWhere"  parameterClass="map" resultClass="Row">
+            SELECT 
+            ${FieldList} 
+            FROM [dbo].[${EntityClassName}]
+            ${DynamicWhere}
+        </select>
+
+        <select id="${EntityClassName}.GetDataSetByFieldsAndParams"  parameterClass="map" remapResults="true" resultClass="Row">
+            SELECT
+            $ColumnNames$
+            FROM [dbo].[${EntityClassName}]
+            ${DynamicWhere}
+        </select>
+        
+        <select id="${EntityClassName}.GetAllListOrder" parameterClass="map" resultClass="${EntityClassName}">
+            SELECT 
+            ${FieldList} 
+            FROM [dbo].[${EntityClassName}]
+            <isPropertyAvailable property="OrderBy" prepend="">
+                order by $OrderBy$
+            </isPropertyAvailable>
+        </select>
+
+        <select id="${EntityClassName}.GetTopNListWhereOrder" parameterClass="map" resultClass="${EntityClassName}">
+            SELECT 
+            <isPropertyAvailable property="Top" prepend="">
+            Top (#Top#)
+            </isPropertyAvailable>
+            ${FieldList}
+            FROM [dbo].[${EntityClassName}]
+            ${DynamicWhere}
+            <isPropertyAvailable property="OrderBy" prepend="">
+                order by $OrderBy$
+            </isPropertyAvailable>
+        </select>
+
+        <select id="${EntityClassName}.GetMaxValueByProperty"  parameterClass="map" resultClass="map">
+            SELECT max($ColumnName$) FROM [dbo].[${EntityClassName}]
+            ${DynamicWhere}
+        </select>
+        
+        <insert id="${EntityClassName}.Insert" parameterClass="${EntityClassName}" resultClass="Int32">
+            INSERT INTO [dbo].[${EntityClassName}] (
+            ${FieldListNoIdentity}
+            ) VALUES (
+            ${ValueListNoIdentity}
+            )
+            SELECT @@IDENTITY
+        </insert>
+
+        <update id="${EntityClassName}.Update" parameterClass="${EntityClassName}">
+            UPDATE [dbo].[${EntityClassName}] SET
+            ${FieldValueListNoKeyIdentity}
+            WHERE
+            (${KeyValueList})
+            SELECT @@rowcount
+        </update>
+
+        <delete id="${EntityClassName}.Delete" parameterClass="int32">
+            DELETE FROM [dbo].[${EntityClassName}]
+            WHERE
+            (${KeyValueList})
+            SELECT @@rowcount
+        </delete>
+
+        <delete id="${EntityClassName}.DeleteByEntity" parameterClass="${EntityClassName}">
+            DELETE FROM [dbo].[${EntityClassName}]
+            WHERE
+            (${KeyValueList})
+            SELECT @@rowcount
+        </delete>
+
+        <statement id="${EntityClassName}.ClearData">
+            truncate table [${EntityClassName}]
+        </statement>
+    </statements>
+</sqlMap>

@@ -1,0 +1,31 @@
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace ${BIZNameSpace}.Implements
+{
+    using ${EntityNameSpace};
+    using ${DAONameSpace}.Interface;
+    using ${DAONameSpace}.Implements;
+    using ${BIZNameSpace}.Interface;
+    public class ${EntityClassName}${BIZClassPostFix} : Base${BIZClassPostFix}<${EntityClassName}>, I${EntityClassName}${BIZClassPostFix}
+    {
+		#region 属性注入与构造方法
+		
+        private I${EntityClassName}${DAOClassPostFix} ${CamelDAOClassPostFix};
+
+        public ${EntityClassName}${BIZClassPostFix}()
+        {
+            this.${CamelDAOClassPostFix} = new ${EntityClassName}${DAOClassPostFix}();
+            base.Base${DAOClassPostFix} = this.${CamelDAOClassPostFix};
+        }
+
+        public ${EntityClassName}${BIZClassPostFix}(string language)
+        {
+            this.${CamelDAOClassPostFix} = new ${EntityClassName}${DAOClassPostFix}(language);
+            base.Base${DAOClassPostFix} = this.${CamelDAOClassPostFix};
+        }
+        
+        #endregion
+    }
+}

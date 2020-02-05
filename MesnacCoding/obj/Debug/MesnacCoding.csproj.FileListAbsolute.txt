@@ -1,0 +1,10 @@
+F:\MesnacCoding\MesnacCoding\bin\Debug\MesnacCoding.exe
+F:\MesnacCoding\MesnacCoding\bin\Debug\MesnacCoding.pdb
+F:\MesnacCoding\MesnacCoding\obj\Debug\MesnacCoding.csprojAssemblyReference.cache
+F:\MesnacCoding\MesnacCoding\obj\Debug\MesnacCoding.FrmConfig.resources
+F:\MesnacCoding\MesnacCoding\obj\Debug\MesnacCoding.FrmStart.resources
+F:\MesnacCoding\MesnacCoding\obj\Debug\MesnacCoding.Properties.Resources.resources
+F:\MesnacCoding\MesnacCoding\obj\Debug\MesnacCoding.csproj.GenerateResource.cache
+F:\MesnacCoding\MesnacCoding\obj\Debug\MesnacCoding.csproj.CoreCompileInputs.cache
+F:\MesnacCoding\MesnacCoding\obj\Debug\MesnacCoding.exe
+F:\MesnacCoding\MesnacCoding\obj\Debug\MesnacCoding.pdb

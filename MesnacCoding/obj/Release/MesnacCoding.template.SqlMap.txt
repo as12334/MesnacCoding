@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sqlMapConfig xmlns="http://ibatis.apache.org/dataMapper"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" >
+    <properties uri="file://DataBase.config"/>
+    <settings>
+        <setting useStatementNamespaces="${useStatementNamespaces}"/>
+        <setting cacheModelsEnabled="true"/>
+        <setting validateSqlMap="false"/>
+        <setting useReflectionOptimizer="true"/>
+    </settings>
+    <providers uri="file://providers.config"/>
+    <database>
+        <provider name="sqlServer2.0"/>
+        <dataSource name="${DataBase}" connectionString="data source=${datasource};database=${database};uid=${userid};pwd=${password}"/>
+    </database>
+    <sqlMaps>
+        ${SqlMaps}
+    </sqlMaps>
+</sqlMapConfig>
